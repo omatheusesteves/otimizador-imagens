@@ -5,14 +5,18 @@ import {
   Check,
   Download,
   FileArchive,
+  FileImage,
+  Gauge,
   Layers3,
   LoaderCircle,
   LockKeyhole,
   Maximize2,
+  Moon,
   Plus,
   RefreshCcw,
   ShieldCheck,
   Sparkles,
+  Sun,
   Trash2,
   UploadCloud,
   Zap,
@@ -258,6 +262,7 @@ export default function ImageOptimizer() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState("");
   const [progress, setProgress] = useState(0);
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   const completedItems = items.filter(
     (item) => item.status === "done" && item.resultBlob,
@@ -280,6 +285,10 @@ export default function ImageOptimizer() {
   useEffect(() => {
     itemsRef.current = items;
   }, [items]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
 
   useEffect(() => {
     return () => {
@@ -474,7 +483,18 @@ export default function ImageOptimizer() {
         : "WebP";
 
   return (
-    <div className="app-shell">
+    <div
+      className="app-shell"
+      data-theme={theme}
+      onPointerMove={(event) => {
+        const x = (event.clientX / window.innerWidth) * 100;
+        const y = (event.clientY / window.innerHeight) * 100;
+        event.currentTarget.style.setProperty("--pointer-x", `${x}%`);
+        event.currentTarget.style.setProperty("--pointer-y", `${y}%`);
+      }}
+    >
+      <div className="aurora aurora-primary" aria-hidden="true" />
+      <div className="aurora aurora-secondary" aria-hidden="true" />
       <header className="topbar">
         <div className="brand" aria-label="Otimizador Web">
           <span className="brand-mark">
@@ -482,18 +502,42 @@ export default function ImageOptimizer() {
           </span>
           Otimizador Web
         </div>
-        <div className="privacy-pill">
-          <span className="privacy-dot" />
-          <span className="privacy-copy">
-            Seus arquivos não saem do dispositivo
-          </span>
-          <LockKeyhole size={13} />
+        <div className="topbar-actions">
+          <button
+            className="theme-toggle"
+            type="button"
+            aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
+            aria-pressed={theme === "dark"}
+            title={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
+            onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
+          >
+            <span className="theme-toggle-track" aria-hidden="true">
+              <Sun size={14} className="theme-icon theme-icon-sun" />
+              <Moon size={13} className="theme-icon theme-icon-moon" />
+              <span className="theme-toggle-thumb" />
+            </span>
+          </button>
+          <div className="privacy-pill">
+            <span className="privacy-dot" />
+            <span className="privacy-copy">
+              Seus arquivos não saem do dispositivo
+            </span>
+            <LockKeyhole size={13} />
+          </div>
         </div>
       </header>
 
       <main className="page">
         <section className="hero" aria-labelledby="page-title">
-          <div>
+          <div className="hero-orbit hero-orbit-left" aria-hidden="true">
+            <FileImage size={15} />
+            AVIF
+          </div>
+          <div className="hero-orbit hero-orbit-right" aria-hidden="true">
+            <Gauge size={15} />
+            −72%
+          </div>
+          <div className="hero-heading">
             <p className="eyebrow">Imagens prontas para a web</p>
             <h1 id="page-title">
               Imagens menores.
@@ -502,10 +546,14 @@ export default function ImageOptimizer() {
             </h1>
           </div>
           <p className="hero-copy">
-            Converta para <strong>WebP ou AVIF</strong>, ou apenas otimize seu
-            PNG e JPEG. Tudo acontece localmente no navegador, sem upload para
-            servidores.
+            Converta para <strong>WebP ou AVIF</strong>, ou apenas otimize seu PNG e
+            JPEG. Tudo acontece localmente no navegador, sem upload para servidores.
           </p>
+          <div className="hero-meta" aria-label="Benefícios principais">
+            <span><Check size={12} /> Sem upload</span>
+            <span><Check size={12} /> Sem limite diário</span>
+            <span><Check size={12} /> Qualidade ajustável</span>
+          </div>
         </section>
 
         <div className="workspace">
@@ -530,9 +578,18 @@ export default function ImageOptimizer() {
                   onDrop={onDrop}
                   aria-label="Selecionar ou arrastar imagens"
                 >
-                  <span className="upload-icon">
-                    <UploadCloud size={30} strokeWidth={1.8} />
-                  </span>
+                  <div className="drop-visual" aria-hidden="true">
+                    <span className="floating-file floating-file-before">
+                      <FileImage size={13} /> 4,8 MB
+                    </span>
+                    <span className="upload-rings" />
+                    <span className="upload-icon">
+                      <UploadCloud size={29} strokeWidth={1.8} />
+                    </span>
+                    <span className="floating-file floating-file-after">
+                      <Zap size={13} /> 480 KB
+                    </span>
+                  </div>
                   <h2>Solte suas imagens aqui</h2>
                   <p>
                     PNG, JPEG ou WebP · até 30 arquivos
@@ -548,27 +605,27 @@ export default function ImageOptimizer() {
                 <div className="format-strip" aria-label="Benefícios">
                   <div className="format-benefit">
                     <span className="benefit-icon">
-                      <Zap size={16} />
+                      <Zap size={19} strokeWidth={1.9} />
                     </span>
-                    <div>
+                    <div className="benefit-copy">
                       <strong>Mais velocidade</strong>
                       <span>Menos peso para carregar</span>
                     </div>
                   </div>
                   <div className="format-benefit">
                     <span className="benefit-icon">
-                      <ShieldCheck size={16} />
+                      <ShieldCheck size={19} strokeWidth={1.9} />
                     </span>
-                    <div>
+                    <div className="benefit-copy">
                       <strong>100% privado</strong>
                       <span>Processamento no navegador</span>
                     </div>
                   </div>
                   <div className="format-benefit">
                     <span className="benefit-icon">
-                      <Layers3 size={16} />
+                      <Layers3 size={19} strokeWidth={1.9} />
                     </span>
-                    <div>
+                    <div className="benefit-copy">
                       <strong>Uso profissional</strong>
                       <span>WordPress, Framer e Webflow</span>
                     </div>
@@ -734,7 +791,8 @@ export default function ImageOptimizer() {
 
             <div className="setting-group">
               <div className="setting-label">Formato de saída</div>
-              <div className="format-options" role="radiogroup">
+              <div className="format-options" role="radiogroup" data-format={format}>
+                <span className="format-glass-indicator" aria-hidden="true" />
                 {(
                   [
                     ["webp", "WebP"],
@@ -878,14 +936,27 @@ export default function ImageOptimizer() {
         </div>
 
         <footer className="footer">
-          <span>
-            Ideal para WordPress, Framer, Webflow, Shopify e sites sob medida.
-          </span>
-          <div className="footer-formats" aria-label="Formatos suportados">
-            <span>AVIF</span>
-            <span>WEBP</span>
-            <span>PNG</span>
-            <span>JPEG</span>
+          <div className="footer-product">
+            <span>
+              Ideal para WordPress, Framer, Webflow, Shopify e sites sob medida.
+            </span>
+            <div className="footer-formats" aria-label="Formatos suportados">
+              <span>AVIF</span>
+              <span>WEBP</span>
+              <span>PNG</span>
+              <span>JPEG</span>
+            </div>
+          </div>
+          <div className="footer-rule" aria-hidden="true" />
+          <div className="footer-meta">
+            <span>© 2026 Otimizador Web. Todos os direitos reservados.</span>
+            <div className="footer-author">
+              <span>
+                Feito por: <a href="https://www.linkedin.com/in/omatheusesteves" target="_blank" rel="noreferrer">Matheus Esteves <span aria-hidden="true">↗</span></a>
+              </span>
+              <span className="footer-separator" aria-hidden="true" />
+              <a href="https://estevesdesign.framer.website/" target="_blank" rel="noreferrer">Portfólio <span aria-hidden="true">↗</span></a>
+            </div>
           </div>
         </footer>
       </main>
