@@ -122,9 +122,59 @@ function canvasToBlob(
   });
 }
 
+async function canvasToWebpBlob(
+  canvas: HTMLCanvasElement,
+  quality: number,
+) {
+  try {
+    const nativeBlob = await canvasToBlob(
+      canvas,
+      "image/webp",
+      quality / 100,
+    );
+
+    if (nativeBlob.type === "image/webp") {
+      return nativeBlob;
+    }
+  } catch {
+    // Algumas versões do Safari no iPad não codificam WebP pelo canvas.
+  }
+
+  try {
+    const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("Canvas indisponível.");
+    }
+
+    const { default: encode } = await import("@jsquash/webp/encode");
+    const output = await encode(
+      context.getImageData(0, 0, canvas.width, canvas.height),
+      {
+        quality,
+        method: 4,
+        alpha_quality: 100,
+      },
+    );
+
+    return new Blob([output], { type: "image/webp" });
+  } catch {
+    throw new Error("Não foi possível gerar WebP neste navegador.");
+  }
+}
+
 async function loadBitmap(file: File) {
   if ("createImageBitmap" in window) {
-    return createImageBitmap(file, { imageOrientation: "from-image" });
+    try {
+      return await createImageBitmap(file, {
+        imageOrientation: "from-image",
+      });
+    } catch {
+      try {
+        return await createImageBitmap(file);
+      } catch {
+        // Continua com o fallback por HTMLImageElement.
+      }
+    }
   }
 
   const url = URL.createObjectURL(file);
@@ -189,10 +239,7 @@ async function convertImage(
     blob = new Blob([output], { type: "image/avif" });
     extension = "avif";
   } else if (format === "webp") {
-    blob = await canvasToBlob(canvas, "image/webp", quality / 100);
-    if (blob.type !== "image/webp") {
-      throw new Error("Seu navegador não oferece codificação WebP.");
-    }
+    blob = await canvasToWebpBlob(canvas, quality);
     extension = "webp";
   } else if (item.file.type === "image/png") {
     const { optimise } = await import("@jsquash/oxipng");
@@ -211,7 +258,10 @@ async function convertImage(
     extension = "png";
   } else {
     const mime = item.file.type === "image/webp" ? "image/webp" : "image/jpeg";
-    const optimized = await canvasToBlob(canvas, mime, quality / 100);
+    const optimized =
+      mime === "image/webp"
+        ? await canvasToWebpBlob(canvas, quality)
+        : await canvasToBlob(canvas, mime, quality / 100);
     blob =
       scale === 1 && optimized.size >= item.file.size ? item.file : optimized;
     extension =
